@@ -13,12 +13,16 @@ resource "tls_private_key" "odoo_key" {
 
 
 resource "tls_self_signed_cert" "odoo_cert" {
-  key_algorithm   = "RSA"
   private_key_pem = tls_private_key.odoo_key.private_key_pem
   subject {
     common_name  = var.domain
-    organization = ["Terraform Odoo"]
+    organization = "Terraform Odoo"
   }
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
   validity_period_hours = 8760 # 1 ano
   dns_names             = [var.domain]
 }
@@ -32,8 +36,8 @@ resource "kubernetes_secret" "tls_secret" {
   type = "kubernetes.io/tls"
 
   data = {
-    tls.crt = tls_self_signed_cert.odoo_cert.cert_pem
-    tls.key = tls_private_key.odoo_key.private_key_pem
+    "tls.crt" = tls_self_signed_cert.odoo_cert.cert_pem
+    "tls.key" = tls_private_key.odoo_key.private_key_pem
   }
 }
 
@@ -74,9 +78,51 @@ resource "kubernetes_stateful_set" "postgres" {
           port {
             container_port = 5432
           }
+
+          volume_mount {
+            name       = "postgres-data"
+            mount_path = "/var/lib/postgresql/data"
+          }
         }
       }
     }
+
+    volume_claim_template {
+      metadata {
+        name = "postgres-data"
+      }
+
+      spec {
+        access_modes = ["ReadWriteOnce"]
+
+        resources {
+          requests = {
+            storage = "5Gi"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Service: Postgres
+resource "kubernetes_service" "postgres" {
+  metadata {
+    name      = "postgres"
+    namespace = kubernetes_namespace.odoo_ns.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "postgres"
+    }
+
+    port {
+      port        = 5432
+      target_port = 5432
+    }
+
+    type = "ClusterIP"
   }
 }
 
@@ -160,7 +206,7 @@ resource "kubernetes_ingress_v1" "odoo_ingress" {
 
   spec {
     tls {
-      hosts      = [var.domain]
+      hosts       = [var.domain]
       secret_name = kubernetes_secret.tls_secret.metadata[0].name
     }
 
@@ -169,7 +215,7 @@ resource "kubernetes_ingress_v1" "odoo_ingress" {
 
       http {
         path {
-          path     = "/"
+          path      = "/"
           path_type = "Prefix"
 
           backend {

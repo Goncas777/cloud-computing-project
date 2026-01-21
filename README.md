@@ -11,22 +11,18 @@ This project implements a scalable, dynamic infrastructure solution that:
 - **Manages databases** with PostgreSQL StatefulSets for data persistence
 - **Configures HTTPS access** with self-signed TLS certificates
 - **Automates deployment** through Terraform, Makefiles, and shell scripts
-
-## Architecture Overview
-
-```
 Multiple Clients & Environments
 ├── AirBnB (Dev, Prod)
 ├── Nike (Dev, QA, Prod)
 └── McDonalds (Dev, QA, Beta, Prod)
 
-Each Environment:
-├── Dedicated Minikube Kubernetes Cluster
-├── Kubernetes Namespace (client-environment)
-├── PostgreSQL Database (StatefulSet)
-├── Odoo Application (Deployment)
-├── Service (ClusterIP routing)
-└── Ingress (HTTPS with TLS)
+Each Client Cluster:
+├── Dedicated Minikube Kubernetes Cluster (one per client workspace)
+└── Namespaces per environment (client-environment)
+  ├── PostgreSQL Database (StatefulSet)
+  ├── Odoo Application (Deployment)
+  ├── Service (ClusterIP routing)
+  └── Ingress (HTTPS with TLS)
 
 Domain Pattern: odoo.{environment}.{client}.local
 ```
@@ -35,6 +31,33 @@ Domain Pattern: odoo.{environment}.{client}.local
 
 ### Dynamic Infrastructure as Code
 
+### 1. Initialize Terraform
+
+```bash
+make init
+```
+
+### 2. Apply for a Client (one workspace per client)
+
+```bash
+make apply CLIENT=airbnb
+make apply CLIENT=nike
+make apply CLIENT=mcdonalds
+```
+
+This command will:
+- Select/Create the Terraform workspace for the client
+- Create the Minikube cluster for the client
+- Deploy namespaces and applications for all environments
+- Update `/etc/hosts` with domain mappings
+
+### 3. Validate Deployments (HTTPS)
+
+```bash
+make validate
+```
+
+Tests HTTPS connectivity to all Odoo applications for the selected client.
 - **Zero hardcoding**: Clients and environments defined in variables only
 - **Scalable design**: Add new clients/environments by modifying variables
 - **No code duplication**: All resources use `for_each` loops
@@ -42,7 +65,8 @@ Domain Pattern: odoo.{environment}.{client}.local
 
 ### Kubernetes Provisioning
 
-- Minikube-based isolated clusters per environment
+- Minikube-based isolated clusters per client (workspace)
+- Environments mapped to namespaces within the client cluster
 - Automated cluster lifecycle management via Terraform
 - Ingress controller pre-configured for HTTP/HTTPS
 - Storage provisioning for persistent data
@@ -94,37 +118,33 @@ cloud-computing-project/
 
 ## Quick Start
 
-### 1. Bootstrap Everything
+### 1. Initialize Terraform
 
 ```bash
-make bootstrap
+make init
+```
+
+### 2. Apply for a Client (one workspace per client)
+
+```bash
+make apply CLIENT=airbnb
+make apply CLIENT=nike
+make apply CLIENT=mcdonalds
 ```
 
 This command will:
-- Initialize Terraform workspace
-- Validate configuration
-- Create all infrastructure
-- Update /etc/hosts with domain mappings
+- Select/Create the Terraform workspace for the client
+- Create the Minikube cluster for the client
+- Deploy namespaces and applications for all environments
+- Update `/etc/hosts` with domain mappings
 
-### 2. Validate Deployments
-
-```bash
-make validate-deployment
-```
-
-Tests HTTPS connectivity to all Odoo applications.
-
-### 3. Access Applications
+### 3. Validate Deployments (HTTPS)
 
 ```bash
-# View access information
-make access-info
-
-# Test HTTPS endpoints
-curl -k https://odoo.dev.airbnb.local/
-curl -k https://odoo.prod.nike.local/
-curl -k https://odoo.qa.mcdonalds.local/
+make validate
 ```
+
+Tests HTTPS connectivity to all Odoo applications for the selected client.
 
 ## Makefile Targets
 

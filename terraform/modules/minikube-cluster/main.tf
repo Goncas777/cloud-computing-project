@@ -1,6 +1,12 @@
 resource "null_resource" "minikube" {
   provisioner "local-exec" {
-    command = "minikube start -p ${var.name} --driver=docker --embed-certs=true"
+    command = <<EOT
+minikube start -p ${var.name} \
+  --driver=${var.driver} \
+  --memory=${var.memory} \
+  --embed-certs=true${var.force ? " --force" : ""}
+minikube addons enable ingress -p ${var.name}
+EOT
   }
 
   lifecycle {
