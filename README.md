@@ -6,7 +6,7 @@ A comprehensive Terraform-based infrastructure platform that provisions and mana
 
 This project implements a scalable, dynamic infrastructure solution that:
 
-- **Provisions isolated Kubernetes clusters** for each client-environment combination using Minikube
+- **Provisions isolated Kubernetes clusters** for each environment using Minikube
 - **Deploys Odoo applications** with full isolation between clients and environments
 - **Manages databases** with PostgreSQL StatefulSets for data persistence
 - **Configures HTTPS access** with self-signed TLS certificates
@@ -16,9 +16,9 @@ Multiple Clients & Environments
 ├── Nike (Dev, QA, Prod)
 └── McDonalds (Dev, QA, Beta, Prod)
 
-Each Client Cluster:
-├── Dedicated Minikube Kubernetes Cluster (one per client workspace)
-└── Namespaces per environment (client-environment)
+Each Environment Cluster:
+├── Dedicated Minikube Kubernetes Cluster (one per environment)
+└── Namespace (client-environment)
   ├── PostgreSQL Database (StatefulSet)
   ├── Odoo Application (Deployment)
   ├── Service (ClusterIP routing)
@@ -47,9 +47,9 @@ make apply CLIENT=mcdonalds
 
 This command will:
 - Select/Create the Terraform workspace for the client
-- Create the Minikube cluster for the client
-- Deploy namespaces and applications for all environments
-- Update `/etc/hosts` with domain mappings
+- Create a single Minikube cluster for the selected environment
+- Deploy the namespace and Odoo stack for that environment
+- Update `/etc/hosts` with the domain mapping for that environment
 
 ### 3. Validate Deployments (HTTPS)
 
@@ -57,16 +57,16 @@ This command will:
 make validate
 ```
 
-Tests HTTPS connectivity to all Odoo applications for the selected client.
+Tests HTTPS connectivity to the Odoo application in the current environment.
 - **Zero hardcoding**: Clients and environments defined in variables only
 - **Scalable design**: Add new clients/environments by modifying variables
-- **No code duplication**: All resources use `for_each` loops
+- **No code duplication**: Single Terraform stack applied per environment
 - **Predictable naming**: Consistent, machine-readable resource names
 
 ### Kubernetes Provisioning
 
-- Minikube-based isolated clusters per client (workspace)
-- Environments mapped to namespaces within the client cluster
+- Minikube-based isolated clusters per environment
+- Each environment is deployed to its own cluster and namespace
 - Automated cluster lifecycle management via Terraform
 - Ingress controller pre-configured for HTTP/HTTPS
 - Storage provisioning for persistent data
@@ -136,7 +136,7 @@ This command will:
 - Select/Create the Terraform workspace for the client
 - Create the Minikube cluster for the client
 - Deploy namespaces and applications for all environments
-- Update `/etc/hosts` with domain mappings
+- Update `/etc/hosts` with all domain mappings for the client
 
 ### 3. Validate Deployments (HTTPS)
 
@@ -145,6 +145,7 @@ make validate
 ```
 
 Tests HTTPS connectivity to all Odoo applications for the selected client.
+
 
 ## Makefile Targets
 
