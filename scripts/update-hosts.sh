@@ -73,7 +73,7 @@ add_hosts_entries() {
                 local domain="odoo.${env}.${client}.local"
                 echo -e "${GREEN}Adding: ${ip} ${domain}${NC}"
                 echo "${ip} ${domain} ${MARKER}" | sudo tee -a /etc/hosts > /dev/null
-                ((entries_added++))
+                entries_added=$((entries_added + 1))
             done
         else
             echo -e "${YELLOW}Warning: Cluster minikube-${client} not running, skipping...${NC}"
