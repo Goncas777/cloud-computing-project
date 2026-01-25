@@ -9,13 +9,16 @@
         destroy-airbnb destroy-nike destroy-mcdonalds \
         validate-airbnb validate-nike validate-mcdonalds \
         plan-airbnb plan-nike plan-mcdonalds \
-        status clean
+        status clean bootstrap
 
 # Default target
 help:
 	@echo "=========================================="
 	@echo "Cloud Platform Engineering - Makefile"
 	@echo "=========================================="
+	@echo ""
+	@echo "Quick Start:"
+	@echo "  make bootstrap         - Complete setup (init + deploy all + validate)"
 	@echo ""
 	@echo "Initialization:"
 	@echo "  make init              - Initialize Terraform and create workspaces"
@@ -39,6 +42,31 @@ help:
 	@echo "  make status            - Show cluster status"
 	@echo "  make clean             - Clean Terraform files"
 	@echo ""
+
+# =============================================================================
+# Bootstrap - Complete Setup from Scratch
+# =============================================================================
+
+bootstrap:
+	@echo "=========================================="
+	@echo "Bootstrapping Cloud Platform"
+	@echo "=========================================="
+	@echo ""
+	@echo "Step 1/4: Initializing Terraform..."
+	@$(MAKE) init
+	@echo ""
+	@echo "Step 2/4: Deploying all clients..."
+	@$(MAKE) apply-all
+	@echo ""
+	@echo "Step 3/4: Updating /etc/hosts..."
+	@$(MAKE) hosts-update
+	@echo ""
+	@echo "Step 4/4: Validating deployments..."
+	@$(MAKE) validate
+	@echo ""
+	@echo "=========================================="
+	@echo "Bootstrap Complete!"
+	@echo "=========================================="
 
 # =============================================================================
 # Initialization

@@ -25,12 +25,12 @@ terraform {
   }
 }
 
-# Minikube Provider
+
 provider "minikube" {
   kubernetes_version = var.kubernetes_version
 }
 
-# Kubernetes Provider - configured after cluster creation
+
 provider "kubernetes" {
   host                   = minikube_cluster.client_cluster.host
   client_certificate     = minikube_cluster.client_cluster.client_certificate
